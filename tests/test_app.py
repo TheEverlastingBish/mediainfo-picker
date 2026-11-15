@@ -9,7 +9,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtWidgets import QApplication
 
 from mediainfo_picker import config
@@ -43,10 +43,11 @@ def window(qapp: QApplication, settings_file: Path) -> Iterator[Window]:
 
 
 def close(w: Window) -> None:
-    """Close and delete now, so no window outlives the QApplication at exit."""
+    """Close and delete the window now. processEvents() alone does not run deferred deletes, and a
+    window left for interpreter shutdown crashed Python 3.11 at exit (none_dealloc, PySide6 6.12)."""
     w.close()
     w.deleteLater()
-    QApplication.processEvents()
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
 
 def checkable(w: Window) -> bool:

@@ -30,7 +30,9 @@ Not affiliated with MediaArea.
 - **MediaInfo's command-line tool**, `mediainfo`, on your `PATH`. It is not bundled. Arch/CachyOS:
   `pacman -S mediainfo`; Debian/Ubuntu: `apt install mediainfo`; macOS: `brew install media-info`.
   Developed against MediaInfoLib v26.10.
-- Python 3.11 or later.
+- Python 3.12 or later. (On 3.11, PySide6 6.12 releases one reference to `None` too many on every
+  `QTreeWidgetItem.setFlags()` call, and Python crashes once the count runs out; from 3.12 `None`
+  is immortal and the bug is harmless.)
 
 ## Install and run
 
@@ -58,6 +60,8 @@ a checkout: `uv run mediainfo-picker`.
   `Attachments` (in General) is one: it appears in the output but not in that list. Such fields are
   removed from the text after the run instead; the status bar says so, and **Copy command** adds an
   `awk` filter that removes them the same way.
+- **The copied command is for a Unix-style shell** (bash, zsh; on Windows, Git Bash or WSL). Its
+  quoting and `awk` filter don't work in PowerShell or `cmd`.
 
 ## Development
 

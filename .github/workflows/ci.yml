@@ -36,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python: ["3.11", "3.14"]  # the oldest supported and the newest
+        python: ["3.12", "3.14"]  # the oldest supported and the newest
     env:
       REQUIRE_MEDIAINFO: "1"  # a missing mediainfo fails the run instead of skipping the live tests
       QT_QPA_PLATFORM: offscreen
