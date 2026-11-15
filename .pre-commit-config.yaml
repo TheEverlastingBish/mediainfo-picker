@@ -1,0 +1,45 @@
+# pre-commit hooks: `uv run pre-commit install` once per clone, then they run on every commit.
+# Run them all by hand with `uv run pre-commit run --all-files`.
+
+# Recorded mediainfo output and MediaArea's own tables are kept byte for byte: --Info-Parameters
+# pads every name with a trailing space, and the tables have CRLF line endings.
+exclude: ^(tests/fixtures/|src/mediainfo_picker/data/mediainfo-csv/)
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: no-commit-to-branch  # main changes only through pull requests
+        args: [--branch, main]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.5  # keep in step with the ruff pin in pyproject.toml
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  # mypy and the tests run in the project's own environment, where PySide6 and its type stubs are.
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (strict)
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q
+        language: system
+        types: [python]
+        pass_filenames: false

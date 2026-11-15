@@ -22,6 +22,7 @@ import re
 import shlex
 import shutil
 import subprocess
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -81,7 +82,7 @@ def kind_of(section: str) -> str:
 class MediaInfo:
     """A mediainfo executable. ``path`` defaults to the one on PATH."""
 
-    def __init__(self, path: str | None = None):
+    def __init__(self, path: str | None = None) -> None:
         found = path or shutil.which("mediainfo")
         if not found:
             raise MediaInfoError("mediainfo was not found on PATH. Install it, e.g. `pacman -S mediainfo`.")
@@ -91,7 +92,7 @@ class MediaInfo:
         """Run mediainfo; fail loudly. Measured on v26.10: an unknown --HideParameter name exits 1
         with its message on STDOUT, and a file that does not exist exits 0 with NO output."""
         try:
-            proc = subprocess.run([self.path, *args], capture_output=True, text=True, timeout=120)
+            proc = subprocess.run([self.path, *args], capture_output=True, text=True, timeout=120, check=False)
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise MediaInfoError(f"could not run mediainfo: {exc}") from exc
         if proc.returncode != 0:
@@ -101,7 +102,7 @@ class MediaInfo:
         return proc.stdout
 
     def version(self) -> str:
-        """"v26.10", from `mediainfo --Version`."""
+        """ "v26.10", from `mediainfo --Version`."""
         out = self.run(["--Version"])
         m = re.search(r"MediaInfoLib - (v[\w.]+)", out)
         return m.group(1) if m else out.strip().splitlines()[-1]
@@ -124,8 +125,7 @@ class MediaInfo:
         if plan.remove:
             raw = self.run([*plan.args, "--Language=raw", p])
             text, removed = strip_params(text, raw, plan.remove)
-        return Result(text=text, command=command_line(self.display_name, plan.args, p, removed),
-                      removed_labels=removed)
+        return Result(text=text, command=command_line(self.display_name, plan.args, p, removed), removed_labels=removed)
 
     @property
     def display_name(self) -> str:
@@ -150,9 +150,9 @@ def _lines(text: str) -> list[str]:
     return text.splitlines()
 
 
-def iter_sections(text: str):
+def iter_sections(text: str) -> Iterator[tuple[str | None, str]]:
     """Yield (section, line) for every line; section is None before the first heading."""
-    section = None
+    section: str | None = None
     for line in _lines(text):
         if line and not _FIELD_LINE.match(line):
             section = line.strip()
@@ -165,13 +165,14 @@ def parse_fields(full: str, full_raw: str, default_raw: str) -> list[Field]:
         raise MediaInfoError(f"mediainfo's raw and readable outputs differ in length ({len(raw)} vs {len(readable)})")
     shown = {(sec, m.group("key")) for sec, line in iter_sections(default_raw) if (m := _FIELD_LINE.match(line))}
     fields: list[Field] = []
-    for (sec, raw_line), text_line in zip(iter_sections(full_raw), readable):
+    for (sec, raw_line), text_line in zip(iter_sections(full_raw), readable, strict=True):
         mr, mt = _FIELD_LINE.match(raw_line), _FIELD_LINE.match(text_line)
         if not (mr and mt and sec):
             continue
         name = mr.group("key")
-        fields.append(Field(section=sec, name=name, label=mt.group("key"), value=mt.group("value"),
-                            default=(sec, name) in shown))
+        fields.append(
+            Field(section=sec, name=name, label=mt.group("key"), value=mt.group("value"), default=(sec, name) in shown)
+        )
     return fields
 
 
@@ -200,12 +201,13 @@ def strip_params(text: str, raw: str, remove: set[str]) -> tuple[str, list[str]]
     lines, raw_lines = _lines(text), _lines(raw)
     if len(lines) != len(raw_lines):
         raise MediaInfoError("mediainfo's raw and readable outputs differ in length; cannot remove fields")
-    kept, removed = [], []
-    for (sec, raw_line), line in zip(iter_sections(raw), lines):
+    kept: list[str] = []
+    removed: list[tuple[str, str]] = []
+    for (sec, raw_line), line in zip(iter_sections(raw), lines, strict=True):
         m = _FIELD_LINE.match(raw_line)
-        if m and sec and f"{kind_of(sec)}_{m.group('key')}" in remove:
-            label = _FIELD_LINE.match(line).group("key")
-            removed.append((kind_of(sec), label))
+        mt = _FIELD_LINE.match(line)
+        if m and mt and sec and f"{kind_of(sec)}_{m.group('key')}" in remove:
+            removed.append((kind_of(sec), mt.group("key")))
             continue
         kept.append(line)
     out = "\n".join(kept) + ("\n" if text.endswith("\n") else "")

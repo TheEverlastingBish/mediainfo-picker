@@ -29,7 +29,7 @@ Not affiliated with MediaArea.
 - **MediaInfo's command-line tool**, `mediainfo`, on your `PATH`. It is not bundled. Arch/CachyOS:
   `pacman -S mediainfo`; Debian/Ubuntu: `apt install mediainfo`; macOS: `brew install media-info`.
   Developed against MediaInfoLib v26.10.
-- Python 3.10 or later.
+- Python 3.11 or later.
 
 ## Install and run
 
