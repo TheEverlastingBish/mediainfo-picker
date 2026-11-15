@@ -1,4 +1,4 @@
-# mediainfo-picker
+# MediaInfo Picker
 
 Pick which [MediaInfo](https://mediaarea.net/en/MediaInfo) fields to show for a media file, then
 copy the output, or the exact `mediainfo` command that produces it.
