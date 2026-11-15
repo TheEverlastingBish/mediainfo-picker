@@ -100,11 +100,16 @@ class Window(QMainWindow):
         # Bottom: command and buttons
         self.command = QLineEdit(readOnly=True, placeholderText="The equivalent mediainfo command appears here")
         self.command.setFont(mono)
+        self.command.setToolTip(
+            "The mediainfo command that prints the output above, for a Unix-style shell "
+            "(bash, zsh; on Windows, Git Bash or WSL)"
+        )
         self.apply_btn = QPushButton("Apply", default=True)
         self.apply_btn.clicked.connect(self.apply)
         copy_out = QPushButton("Copy output")
         copy_out.clicked.connect(lambda: self.copy(self.output.toPlainText(), "Output"))
         copy_cmd = QPushButton("Copy command")
+        copy_cmd.setToolTip(self.command.toolTip())
         copy_cmd.clicked.connect(lambda: self.copy(self.command.text(), "Command"))
         brow = QHBoxLayout()
         brow.addStretch(1)

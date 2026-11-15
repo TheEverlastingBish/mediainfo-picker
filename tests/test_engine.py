@@ -1,6 +1,7 @@
 import shlex
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -147,6 +148,7 @@ needs_mediainfo = pytest.mark.skipif(not shutil.which("mediainfo"), reason="medi
 
 
 @needs_mediainfo
+@pytest.mark.skipif(sys.platform == "win32", reason="the copied command is for a Unix-style shell")
 def test_live_render_matches_its_own_command(tmp_path: Path) -> None:
     sample = tmp_path / "it's a sample.mkv"
     sample.write_bytes((FX / "sample.mkv").read_bytes())

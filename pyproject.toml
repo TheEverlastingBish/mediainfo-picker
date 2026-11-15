@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE", "src/mediainfo_picker/data/mediainfo-csv/LICENSE-MediaInfoLib"]
 authors = [{ name = "Bish Sinha" }]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
     "Environment :: X11 Applications :: Qt",
     "Topic :: Multimedia :: Video",
@@ -41,7 +41,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -66,7 +66,7 @@ known-first-party = ["mediainfo_picker"]
 docstring-code-format = true
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 files = ["src", "tests", "scripts"]
 strict = true
 warn_unreachable = true
