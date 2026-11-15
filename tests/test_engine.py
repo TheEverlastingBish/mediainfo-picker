@@ -13,6 +13,7 @@ from mediainfo_picker.engine import (
     command_line,
     parse_fields,
     parse_info_parameters,
+    parse_kinds,
     plan,
     strip_params,
 )
@@ -67,6 +68,17 @@ def test_attachments_is_read_although_mediainfo_does_not_list_it(fields: list[Fi
     assert f.default and f.value == "cover.jpg"
     assert "General_Attachments" not in known
     assert "General_VideoCount" in known
+
+
+def test_kinds_are_read_from_info_parameters() -> None:
+    kinds = parse_kinds(read("info-parameters.txt"))
+    assert kinds == ["General", "Video", "Audio", "Text", "Other", "Image", "Menu"]
+
+
+def test_every_kind_has_bundled_descriptions() -> None:
+    from mediainfo_picker.descriptions import bundled_kinds
+
+    assert set(parse_kinds(read("info-parameters.txt"))) <= bundled_kinds()
 
 
 def test_mismatched_outputs_fail_loudly() -> None:
@@ -163,3 +175,29 @@ def test_descriptions_are_bundled() -> None:
     assert data_tag().startswith("v")
     assert describe("General_UniqueID/String").startswith("The unique ID")
     assert describe("General_Attachments") == ""
+
+
+# These pin the facts engine.py is built on to the INSTALLED mediainfo, so a release that changes
+# one fails here instead of breaking the app quietly.
+
+
+@needs_mediainfo
+def test_installed_kinds_all_have_descriptions() -> None:
+    """A new stream kind in a mediainfo release: run scripts/update-mediainfo-csv.py."""
+    from mediainfo_picker.descriptions import bundled_kinds
+
+    missing = set(MediaInfo().kinds()) - bundled_kinds()
+    assert not missing, f"no bundled field table for {sorted(missing)}: run scripts/update-mediainfo-csv.py"
+
+
+@needs_mediainfo
+def test_unknown_hide_parameter_is_refused() -> None:
+    with pytest.raises(MediaInfoError, match="unknown"):
+        MediaInfo().run(["--HideParameter=General_NoSuchField", str(FX / "sample.mkv")])
+
+
+@needs_mediainfo
+def test_raw_and_readable_outputs_line_up_after_hiding() -> None:
+    mi, f = MediaInfo(), str(FX / "sample.mkv")
+    args = ["--HideParameter=General_Title,Audio_Format/String"]
+    assert len(mi.run([*args, f]).splitlines()) == len(mi.run([*args, "--Language=raw", f]).splitlines())

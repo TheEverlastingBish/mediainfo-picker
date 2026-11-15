@@ -4,15 +4,16 @@ version = "0.1.0"
 description = "Pick which MediaInfo fields to show for a media file, and copy the output or the command that makes it"
 readme = "README.md"
 license = "MIT"
-license-files = ["LICENSE", "src/mediainfo_picker/data/mediainfo-csv/LICENSE"]
+license-files = ["LICENSE", "src/mediainfo_picker/data/mediainfo-csv/LICENSE-MediaInfoLib"]
 authors = [{ name = "Bish Sinha" }]
 requires-python = ">=3.11"
-dependencies = ["PySide6-Essentials>=6.5"]
 classifiers = [
     "Environment :: X11 Applications :: Qt",
     "Topic :: Multimedia :: Video",
     "Programming Language :: Python :: 3",
 ]
+# Last key of [project]: anything after the [project.*] tables below would belong to them.
+dependencies = ["PySide6-Essentials>=6.5"]
 
 [project.urls]
 Repository = "https://github.com/TheEverlastingBish/mediainfo-picker"
@@ -66,6 +67,6 @@ docstring-code-format = true
 
 [tool.mypy]
 python_version = "3.11"
-files = ["src", "tests"]
+files = ["src", "tests", "scripts"]
 strict = true
 warn_unreachable = true

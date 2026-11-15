@@ -2,7 +2,9 @@
 
 No Qt here, so it can be tested and reused without a display.
 
-Three facts about mediainfo (MediaInfoLib v26.10) shape this module:
+Four facts about mediainfo shape this module. None of them is pinned to a version: the live tests
+in tests/test_engine.py check each one against the installed mediainfo, so a release that changes
+one fails a test rather than this module quietly.
 
 - A field's internal name comes from ``--Language=raw``, and that output lines up line for line
   with the normal one, before and after ``--HideParameter``/``--ShowParameter``. So the two can be
@@ -13,6 +15,8 @@ Three facts about mediainfo (MediaInfoLib v26.10) shape this module:
 - ``--HideParameter`` accepts only names listed by ``--Info-Parameters``. Given any other, such as
   ``General_Attachments``, it reports it as unknown and prints nothing at all. Fields like that
   are removed from the text after the run instead.
+- The stream kinds (General, Video, Audio, …) are read from ``--Info-Parameters`` too, where each
+  is the first line of a block, so a kind added in a later release needs no change here.
 """
 
 from __future__ import annotations
@@ -25,8 +29,6 @@ import subprocess
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-
-KINDS = ("General", "Video", "Audio", "Text", "Other", "Image", "Menu")
 
 _FIELD_LINE = re.compile(r"^(?P<key>\S.*?) *: (?P<value>.*)$")
 
@@ -89,8 +91,8 @@ class MediaInfo:
         self.path = found
 
     def run(self, args: list[str]) -> str:
-        """Run mediainfo; fail loudly. Measured on v26.10: an unknown --HideParameter name exits 1
-        with its message on STDOUT, and a file that does not exist exits 0 with NO output."""
+        """Run mediainfo; fail loudly. An unknown --HideParameter name exits 1 with its message on
+        STDOUT, and a file that does not exist exits 0 with NO output (both checked by the tests)."""
         try:
             proc = subprocess.run([self.path, *args], capture_output=True, text=True, timeout=120, check=False)
         except (OSError, subprocess.TimeoutExpired) as exc:
@@ -102,7 +104,7 @@ class MediaInfo:
         return proc.stdout
 
     def version(self) -> str:
-        """ "v26.10", from `mediainfo --Version`."""
+        """The MediaInfoLib version, such as "v26.10", from `mediainfo --Version`."""
         out = self.run(["--Version"])
         m = re.search(r"MediaInfoLib - (v[\w.]+)", out)
         return m.group(1) if m else out.strip().splitlines()[-1]
@@ -110,6 +112,10 @@ class MediaInfo:
     def known_params(self) -> set[str]:
         """Every "Kind_Name" that --HideParameter/--ShowParameter accept."""
         return parse_info_parameters(self.run(["--Info-Parameters"]))
+
+    def kinds(self) -> list[str]:
+        """The stream kinds this mediainfo knows, in its order: "General", "Video", …"""
+        return parse_kinds(self.run(["--Info-Parameters"]))
 
     def read_fields(self, path: str | Path) -> list[Field]:
         p = str(path)
@@ -132,18 +138,24 @@ class MediaInfo:
         return "mediainfo" if shutil.which("mediainfo") == self.path else self.path
 
 
-def parse_info_parameters(text: str) -> set[str]:
-    params: set[str] = set()
-    kind = None
-    for line in text.splitlines():
+def _info_blocks(text: str) -> Iterator[tuple[str, list[str]]]:
+    """--Info-Parameters as (kind, names): blocks separated by blank lines, each headed by its kind."""
+    block: list[str] = []
+    for line in [*text.splitlines(), ""]:
         name = line.strip()
-        if not name:
-            continue
-        if name in KINDS:
-            kind = name
-        elif kind:
-            params.add(f"{kind}_{name}")
-    return params
+        if name:
+            block.append(name)
+        elif block:
+            yield block[0], block[1:]
+            block = []
+
+
+def parse_kinds(text: str) -> list[str]:
+    return [kind for kind, _ in _info_blocks(text)]
+
+
+def parse_info_parameters(text: str) -> set[str]:
+    return {f"{kind}_{name}" for kind, names in _info_blocks(text) for name in names}
 
 
 def _lines(text: str) -> list[str]:

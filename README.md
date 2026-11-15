@@ -7,7 +7,8 @@ MediaInfo's text output is either the default set of fields or `--Full`, everyth
 anything in between you pass `--HideParameter` and `--ShowParameter`, which take internal names
 (`General_UniqueID/String`, `Video_Encoded_Library_Settings`) that the normal output never shows.
 mediainfo-picker lists every field the file actually has, by its readable label *and* its internal
-name, lets you tick the ones you want, and builds the command for you.
+name, lets you tick the ones you want, and shows you the output along with the CLI command that
+created it.
 
 Not affiliated with MediaArea.
 
@@ -50,7 +51,8 @@ a checkout: `uv run mediainfo-picker`.
   hidden or shown.
 - **Tooltips come from MediaInfoLib's field tables**, bundled in
   `src/mediainfo_picker/data/mediainfo-csv/` from the release tag in `TAG` there. Refresh them with
-  `scripts/update-mediainfo-csv.py --tag vXX.YY`.
+  `uv run scripts/update-mediainfo-csv.py`, which fetches the installed mediainfo's version (or
+  `--tag vXX.YY`) and every stream kind that version lists.
 - **A few fields cannot be hidden by `mediainfo` at all.** `--HideParameter` only accepts names
   listed by `mediainfo --Info-Parameters`, and given any other it prints nothing but an error.
   `Attachments` (in General) is one: it appears in the output but not in that list. Such fields are
@@ -71,4 +73,5 @@ installed.
 ## Licence
 
 MIT, see [LICENSE](LICENSE). The bundled MediaInfoLib field tables are © MediaArea.net SARL under
-the BSD 2-Clause licence, in [their own LICENSE](src/mediainfo_picker/data/mediainfo-csv/LICENSE).
+the BSD 2-Clause licence; its notice, which the licence requires to travel with them, is
+[`LICENSE-MediaInfoLib`](src/mediainfo_picker/data/mediainfo-csv/LICENSE-MediaInfoLib).
