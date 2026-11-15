@@ -1,0 +1,274 @@
+General
+Count                            : 361
+StreamCount                      : 1
+StreamKind                       : General
+StreamKind/String                : General
+StreamKindID                     : 0
+VideoCount                       : 1
+AudioCount                       : 2
+ImageCount                       : 1
+Video_Format_List                : AVC
+Video_Format_WithHint_List       : AVC
+Video_Codec_List                 : AVC
+Audio_Format_List                : AAC LC / AAC LC
+Audio_Format_WithHint_List       : AAC LC / AAC LC
+Audio_Codec_List                 : AAC LC / AAC LC
+Audio_Channels_Total             : 2
+Image_Format_List                : JPEG
+Image_Format_WithHint_List       : JPEG
+Image_Codec_List                 : JPEG
+CompleteName                     : sample.mkv
+FileNameExtension                : sample.mkv
+FileName                         : sample
+FileExtension                    : mkv
+Format                           : Matroska
+Format/String                    : Matroska
+Format/Url                       : https://matroska.org/downloads/windows.html
+Format/Extensions                : mkv mk3d mka mks
+Format_Commercial                : Matroska
+Format_Version                   : Version 4
+FileSize                         : 46666
+FileSize/String                  : 45.6 KiB
+FileSize/String1                 : 46 KiB
+FileSize/String2                 : 46 KiB
+FileSize/String3                 : 45.6 KiB
+FileSize/String4                 : 45.57 KiB
+Duration                         : 1023
+Duration/String                  : 1s 23ms
+Duration/String1                 : 1s 23ms
+Duration/String2                 : 1s 23ms
+Duration/String3                 : 00:00:01.023
+Duration/String4                 : 00:00:01:00
+Duration/String5                 : 00:00:01.023 (00:00:01:00)
+OverallBitRate                   : 364935
+OverallBitRate/String            : 365 Kbps
+FrameRate                        : 24.000
+FrameRate/String                 : 24.000 fps
+FrameCount                       : 24
+IsStreamable                     : Yes
+Title                            : Sample Title
+Movie                            : Sample Title
+File_Modified_Date               : 2026-11-15 20:49:46 UTC
+File_Modified_Date_Local         : 2026-11-15 20:49:46
+Encoded_Application              : Lavf
+Encoded_Application/String       : Lavf
+Encoded_Library                  : Lavf
+Encoded_Library/String           : Lavf
+Cover                            : Yes
+Cover_Description                : cover.jpg
+Cover_Type                       : Cover
+Cover_Mime                       : image/jpeg
+ErrorDetectionType               : Per level 1
+Attachments                      : cover.jpg
+
+Video
+Count                            : 398
+StreamCount                      : 1
+StreamKind                       : Video
+StreamKind/String                : Video
+StreamKindID                     : 0
+StreamOrder                      : 0
+ID                               : 1
+ID/String                        : 1
+UniqueID                         : 1
+Format                           : AVC
+Format/String                    : AVC
+Format/Info                      : Advanced Video Codec
+Format/Url                       : http://developers.videolan.org/x264.html
+Format_Commercial                : AVC
+Format_Profile                   : High 4:4:4 Predictive@L1.3
+Format_Settings                  : 1 Ref Frames
+Format_Settings_CABAC            : No
+Format_Settings_CABAC/String     : No
+Format_Settings_RefFrames        : 1
+Format_Settings_RefFrames/String : 1 frame
+InternetMediaType                : video/H264
+CodecID                          : V_MPEG4/ISO/AVC
+CodecID/Url                      : http://ffdshow-tryout.sourceforge.net/
+Duration                         : 1000.000000
+Duration/String                  : 1s 0ms
+Duration/String1                 : 1s 0ms
+Duration/String2                 : 1s 0ms
+Duration/String3                 : 00:00:01.000
+Duration/String4                 : 00:00:01:00
+Duration/String5                 : 00:00:01.000 (00:00:01:00)
+Width                            : 320
+Width/String                     : 320 pixel
+Height                           : 240
+Height/String                    : 240 pixel
+Sampled_Width                    : 320
+Sampled_Height                   : 240
+PixelAspectRatio                 : 1.000
+DisplayAspectRatio               : 1.333
+DisplayAspectRatio/String        : 4:3
+FrameRate_Mode                   : CFR
+FrameRate_Mode/String            : CFR
+FrameRate_Mode_Original          : VFR
+FrameRate                        : 24.000
+FrameRate/String                 : 24.000 fps
+FrameCount                       : 24
+ChromaSubsampling                : 4:4:4
+ChromaSubsampling/String         : 4:4:4
+BitDepth                         : 8
+BitDepth/String                  : 8 bit
+ScanType                         : Progressive
+ScanType/String                  : Progressive
+Delay                            : 0
+Delay/String3                    : 00:00:00.000
+Delay/String4                    : 00:00:00:00
+Delay/String5                    : 00:00:00.000 (00:00:00:00)
+Delay_Source                     : Container
+Delay_Source/String              : Container
+Encoded_Library                  : x264 - core 165 r3222 b35605a
+Encoded_Library/String           : x264 core 165 r3222 b35605a
+Encoded_Library_Name             : x264
+Encoded_Library_Version          : core 165 r3222 b35605a
+Encoded_Library_Settings         : cabac=0 / ref=1 / deblock=0:0:0 / analyse=0:0 / me=dia / subme=0 / psy=1 / psy_rd=1.00:0.00 / mixed_ref=0 / me_range=16 / chroma_me=1 / trellis=0 / 8x8dct=0 / cqm=0 / deadzone=21,11 / fast_pskip=1 / chroma_qp_offset=6 / threads=7 / lookahead_threads=1 / sliced_threads=0 / nr=0 / decimate=1 / interlaced=0 / bluray_compat=0 / constrained_intra=0 / bframes=0 / weightp=0 / keyint=250 / keyint_min=24 / scenecut=0 / intra_refresh=0 / rc=crf / mbtree=0 / crf=23.0 / qcomp=0.60 / qpmin=0 / qpmax=69 / qpstep=4 / ip_ratio=1.40 / aq=0
+Default                          : No
+Default/String                   : No
+Forced                           : No
+Forced/String                    : No
+colour_description_present       : Yes
+colour_description_present_Sourc : Container
+colour_range                     : Limited
+colour_range_Source              : Container
+
+Audio #1
+Count                            : 285
+StreamCount                      : 2
+StreamKind                       : Audio
+StreamKind/String                : Audio
+StreamKindID                     : 0
+StreamKindPos                    : 1
+StreamOrder                      : 1
+ID                               : 2
+ID/String                        : 2
+UniqueID                         : 2
+Format                           : AAC
+Format/String                    : AAC LC
+Format/Info                      : Advanced Audio Codec Low Complexity
+Format_Commercial                : AAC
+Format_Settings_SBR              : No (Explicit)
+Format_Settings_SBR/String       : No (Explicit)
+Format_AdditionalFeatures        : LC
+CodecID                          : A_AAC-2
+Duration                         : 1023.000000
+Duration/String                  : 1s 23ms
+Duration/String1                 : 1s 23ms
+Duration/String2                 : 1s 23ms
+Duration/String3                 : 00:00:01.023
+Duration/String5                 : 00:00:01.023
+Channel(s)                       : 1
+Channel(s)/String                : 1 channel
+ChannelPositions                 : Front: C
+ChannelPositions/String2         : 1/0/0
+ChannelLayout                    : M
+SamplesPerFrame                  : 1024
+SamplingRate                     : 44100
+SamplingRate/String              : 44.1 KHz
+SamplingCount                    : 45114
+FrameRate                        : 43.066
+FrameRate/String                 : 43.066 fps (1024 SPF)
+Compression_Mode                 : Lossy
+Compression_Mode/String          : Lossy
+Delay                            : 0
+Delay/String3                    : 00:00:00.000
+Delay/String5                    : 00:00:00.000
+Delay_Source                     : Container
+Delay_Source/String              : Container
+Video_Delay                      : 0
+Video_Delay/String3              : 00:00:00.000
+Video_Delay/String5              : 00:00:00.000
+Encoded_Library                  : Lavc aac
+Encoded_Library/String           : Lavc aac
+Default                          : Yes
+Default/String                   : Yes
+Forced                           : No
+Forced/String                    : No
+
+Audio #2
+Count                            : 285
+StreamCount                      : 2
+StreamKind                       : Audio
+StreamKind/String                : Audio
+StreamKindID                     : 1
+StreamKindPos                    : 2
+StreamOrder                      : 2
+ID                               : 3
+ID/String                        : 3
+UniqueID                         : 3
+Format                           : AAC
+Format/String                    : AAC LC
+Format/Info                      : Advanced Audio Codec Low Complexity
+Format_Commercial                : AAC
+Format_Settings_SBR              : No (Explicit)
+Format_Settings_SBR/String       : No (Explicit)
+Format_AdditionalFeatures        : LC
+CodecID                          : A_AAC-2
+Duration                         : 1023.000000
+Duration/String                  : 1s 23ms
+Duration/String1                 : 1s 23ms
+Duration/String2                 : 1s 23ms
+Duration/String3                 : 00:00:01.023
+Duration/String5                 : 00:00:01.023
+Channel(s)                       : 1
+Channel(s)/String                : 1 channel
+ChannelPositions                 : Front: C
+ChannelPositions/String2         : 1/0/0
+ChannelLayout                    : M
+SamplesPerFrame                  : 1024
+SamplingRate                     : 44100
+SamplingRate/String              : 44.1 KHz
+SamplingCount                    : 45114
+FrameRate                        : 43.066
+FrameRate/String                 : 43.066 fps (1024 SPF)
+Compression_Mode                 : Lossy
+Compression_Mode/String          : Lossy
+Delay                            : 0
+Delay/String3                    : 00:00:00.000
+Delay/String5                    : 00:00:00.000
+Delay_Source                     : Container
+Delay_Source/String              : Container
+Video_Delay                      : 0
+Video_Delay/String3              : 00:00:00.000
+Video_Delay/String5              : 00:00:00.000
+Encoded_Library                  : Lavc aac
+Encoded_Library/String           : Lavc aac
+Default                          : No
+Default/String                   : No
+Forced                           : No
+Forced/String                    : No
+
+Image
+Count                            : 177
+StreamCount                      : 1
+StreamKind                       : Image
+StreamKind/String                : Image
+StreamKindID                     : 0
+Type                             : Cover
+Type/String                      : Cover
+Title                            : cover.jpg
+Format                           : JPEG
+Format/String                    : JPEG
+Format_Commercial                : JPEG
+MuxingMode                       : Attachment
+InternetMediaType                : image/jpeg
+Width                            : 64
+Width/String                     : 64 pixel
+Height                           : 48
+Height/String                    : 48 pixel
+ColorSpace                       : YUV
+BitDepth                         : 8
+BitDepth/String                  : 8 bit
+Compression_Mode                 : Lossy
+Compression_Mode/String          : Lossy
+StreamSize                       : 1944
+StreamSize/String                : 1.90 KiB (4%)
+StreamSize/String1               : 2 KiB
+StreamSize/String2               : 1.9 KiB
+StreamSize/String3               : 1.90 KiB
+StreamSize/String4               : 1.898 KiB
+StreamSize/String5               : 1.90 KiB (4%)
+StreamSize_Proportion            : 0.04166
+
+
