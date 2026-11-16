@@ -2,7 +2,7 @@
 
 A release is a version number, a signed tag `vX.Y.Z` on `main`, the packages on PyPI and a GitHub
 Release with notes. Pushing the tag does everything after the tag: `.github/workflows/release.yml`
-runs CI, builds the wheel and sdist, publishes them to PyPI and creates the GitHub Release with the
+runs CI (on Linux, Windows and, only here, macOS), builds the wheel and sdist, publishes them to PyPI and creates the GitHub Release with the
 notes from `CHANGELOG.md`. No token is stored anywhere: PyPI trusts that workflow directly
 ([Trusted Publishing](https://docs.pypi.org/trusted-publishers/)).
 
@@ -20,10 +20,12 @@ the middle number (0.2.0 → 0.3.0) and a fix bumps the last (0.2.0 → 0.2.1).
    The tests fail if the changelog has no section for the version in `pyproject.toml`.
 2. **Check the app by hand on the operating systems CI cannot look at**: start it on Windows and
    macOS, open a file, switch the modes, apply, copy the output and the command. CI runs the tests
-   on all three, but never sees the window.
+   on Linux and Windows for every pull request, and on macOS only in release runs; it never sees
+   the window.
 3. **Merge** (squash), then update a local `main`.
-4. **Optional dry run on TestPyPI**: Actions → Release → *Run workflow* on `main`. It runs CI,
-   builds, and publishes to [TestPyPI](https://test.pypi.org/project/mediainfo-picker/) only. Then
+4. **Dry run on TestPyPI** (optional, but it is the first run of the macOS tests since the last
+   release, so a macOS problem shows up here instead of after tagging): Actions → Release →
+   *Run workflow* on `main`. It runs CI, builds, and publishes to [TestPyPI](https://test.pypi.org/project/mediainfo-picker/) only. Then
    try it:
 
    ```bash
