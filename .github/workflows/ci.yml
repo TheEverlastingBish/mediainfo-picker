@@ -1,5 +1,7 @@
-# The same checks as pre-commit, on every pull request and on main, on Linux, Windows and macOS.
-# release.yml runs this too, before it builds anything.
+# The same checks as pre-commit, on every pull request and on main, on Linux and Windows.
+# release.yml runs this too, before it builds anything, and adds macOS: macOS runners are scarce and
+# often queue for many minutes, so a pull request doesn't wait for them, but a release does.
+# The ruleset on main requires the PR checks by job name; update it if this matrix changes.
 name: CI
 
 on:
@@ -7,6 +9,11 @@ on:
   push:
     branches: [main]
   workflow_call:
+    inputs:
+      macos:
+        description: Also test on macOS
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -38,7 +45,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # inputs is empty on pull_request and push, so macOS runs only when release.yml asks for it
+        os: ${{ fromJSON(inputs.macos && '["ubuntu-latest", "windows-latest", "macos-latest"]' || '["ubuntu-latest", "windows-latest"]') }}
         python: ["3.12", "3.14"]  # the oldest supported and the newest
     env:
       REQUIRE_MEDIAINFO: "1"  # a missing mediainfo fails the run instead of skipping the live tests
