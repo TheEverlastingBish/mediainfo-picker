@@ -1,0 +1,125 @@
+# Releases. Pushing a v* tag runs CI, builds the packages, publishes them to PyPI and creates the
+# GitHub Release with the CHANGELOG notes. Running this workflow by hand from the Actions tab does
+# the same up to the build, then publishes to TestPyPI instead, as a dry run. See RELEASING.md.
+#
+# Publishing uses PyPI's Trusted Publishing: no token is stored anywhere. PyPI and TestPyPI each
+# trust this file (release.yml) in this repository, in the GitHub environment named below.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # never stop a release halfway
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build
+    needs: ci
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: false  # a release is built from nothing but the commit
+      - name: Version, and the tag must match it
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version=$(uv version --short)
+          if [ "$REF_TYPE" = tag ] && [ "$REF_NAME" != "v$version" ]; then
+            echo "::error::tag $REF_NAME does not match version $version in pyproject.toml"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: The CHANGELOG has notes for this version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: uv run --no-project scripts/release-notes.py "$VERSION"
+      - run: uv build
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  testpypi:
+    name: Publish to TestPyPI
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/mediainfo-picker/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write  # Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  pypi:
+    name: Publish to PyPI
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/mediainfo-picker/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write  # Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
+
+  github-release:
+    name: GitHub Release
+    needs: [build, pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the Release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - name: Create the Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          uv run --no-project scripts/release-notes.py "$VERSION" > notes.md
+          flags=()
+          if [[ "$VERSION" =~ (a|b|rc)[0-9]+$ ]]; then flags+=(--prerelease); fi
+          gh release create "$TAG" dist/* --verify-tag --title "mediainfo-picker $VERSION" \
+            --notes-file notes.md "${flags[@]}"
