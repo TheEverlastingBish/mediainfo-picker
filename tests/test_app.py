@@ -84,7 +84,8 @@ def test_selected_fields_starts_from_defaults_and_applies_ticks(window: Window) 
     text = window.output.toPlainText()
     assert "Sample Title" not in text and "Attachments" not in text
     assert "--HideParameter=General_Title" in window.command.text()
-    assert "Attachments" in window.statusBar().currentMessage()
+    assert "Attachments" in window.log_view.toPlainText()
+    assert not window.statusBar().currentMessage()  # the status bar is for versions and errors
 
 
 def test_search_filters_the_list(window: Window) -> None:
@@ -154,3 +155,17 @@ def test_left_panel_cannot_squeeze_the_count(window: Window) -> None:
     window.splitter.setSizes([0, 2000])
     left = window.splitter.widget(0)
     assert left is not None and left.width() >= left.minimumSizeHint().width()
+
+
+def test_banner_icon_and_versions(window: Window) -> None:
+    assert window.windowTitle() == "MediaInfo Picker"
+    assert not window.windowIcon().isNull()
+    versions = window.version_label.text()
+    assert versions.startswith("MediaInfo v") and "· Descriptions v" in versions
+    assert "· MediaInfo Picker v" in versions
+
+
+def test_messages_go_to_the_log(window: Window) -> None:
+    assert "Opened " in window.log_view.toPlainText()
+    window.copy("x", "Output")
+    assert window.log_view.toPlainText().splitlines()[-1].endswith("Output copied to the clipboard.")
