@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Iterator
+from datetime import datetime
+from importlib.resources import files
 from pathlib import Path
 
 from PySide6.QtCore import QByteArray, Qt
-from PySide6.QtGui import QCloseEvent, QFontDatabase, QGuiApplication
+from PySide6.QtGui import QCloseEvent, QFont, QFontDatabase, QGuiApplication, QIcon
 from PySide6.QtWidgets import (
     QAbstractButton,
     QApplication,
@@ -32,6 +34,8 @@ from . import __version__, config
 from .descriptions import data_tag, describe
 from .engine import Field, MediaInfo, MediaInfoError, Mode, plan
 
+APP_NAME = "MediaInfo Picker"
+ACCENT = "#17707F"  # the banner and the icon (data/icon.svg) share this colour
 PARAM = Qt.ItemDataRole.UserRole  # an item's "Kind_Name"
 DEFAULT = Qt.ItemDataRole.UserRole + 1  # whether mediainfo shows it by default
 CHECKABLE = Qt.ItemFlag.ItemIsUserCheckable
@@ -39,6 +43,31 @@ CHECKABLE = Qt.ItemFlag.ItemIsUserCheckable
 
 def _check(on: bool) -> Qt.CheckState:
     return Qt.CheckState.Checked if on else Qt.CheckState.Unchecked
+
+
+def app_icon() -> QIcon:
+    return QIcon(str(files("mediainfo_picker") / "data" / "icon.svg"))
+
+
+def banner() -> QWidget:
+    """The strip across the top: the icon and the app's name on the accent colour."""
+    strip = QWidget()
+    strip.setObjectName("banner")
+    strip.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+    strip.setStyleSheet(f"#banner {{ background: {ACCENT}; }} #banner QLabel {{ color: white; }}")
+    icon = QLabel()
+    icon.setPixmap(app_icon().pixmap(22, 22))
+    title = QLabel(APP_NAME)
+    font = QFont(title.font())
+    font.setPointSizeF(font.pointSizeF() * 1.3)
+    font.setBold(True)
+    title.setFont(font)
+    row = QHBoxLayout(strip)
+    row.setContentsMargins(10, 6, 10, 6)
+    row.addWidget(icon)
+    row.addWidget(title)
+    row.addStretch(1)
+    return strip
 
 
 class Window(QMainWindow):
@@ -51,7 +80,8 @@ class Window(QMainWindow):
         self.path = ""
         self.selected: set[str] = set(self.settings.selected)
         self._updating = False
-        self.setWindowTitle("mediainfo-picker")
+        self.setWindowTitle(APP_NAME)
+        self.setWindowIcon(app_icon())
         mono = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
 
         # File row
@@ -75,19 +105,35 @@ class Window(QMainWindow):
         modes.addStretch(1)
         self.search = QLineEdit(placeholderText="Search fields…", clearButtonEnabled=True)
         self.search.textChanged.connect(self.apply_filter)
-        self.count = QLabel()
-        srow = QHBoxLayout()
-        srow.addWidget(self.search, 1)
-        srow.addWidget(self.count)
+        self._expanded_before_search: set[str] | None = None
         self.tree = QTreeWidget()
         self.tree.setHeaderHidden(True)
         self.tree.itemChanged.connect(self.item_changed)
+        expand = QPushButton("Expand all")
+        expand.clicked.connect(lambda: self.set_expanded(True))
+        collapse = QPushButton("Collapse all")
+        collapse.clicked.connect(lambda: self.set_expanded(False))
+        self.defaults_btn = QPushButton("Defaults")
+        self.defaults_btn.setToolTip("Tick exactly the fields mediainfo shows by default")
+        self.defaults_btn.clicked.connect(self.select_defaults)
+        self.clear_btn = QPushButton("Clear all")
+        self.clear_btn.setToolTip("Untick every field")
+        self.clear_btn.clicked.connect(self.clear_selection)
+        tools = QHBoxLayout()
+        for b in (expand, collapse):
+            tools.addWidget(b)
+        tools.addStretch(1)
+        for b in (self.defaults_btn, self.clear_btn):
+            tools.addWidget(b)
+        self.count = QLabel()
         left = QWidget()
         lv = QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
         lv.addLayout(modes)
-        lv.addLayout(srow)
+        lv.addWidget(self.search)
+        lv.addLayout(tools)
         lv.addWidget(self.tree, 1)
+        lv.addWidget(self.count)
 
         # Right: output
         self.output = QPlainTextEdit(readOnly=True, lineWrapMode=QPlainTextEdit.LineWrapMode.NoWrap)
@@ -95,6 +141,7 @@ class Window(QMainWindow):
         self.splitter = QSplitter()
         self.splitter.addWidget(left)
         self.splitter.addWidget(self.output)
+        self.splitter.setChildrenCollapsible(False)  # the left panel never shrinks below its buttons
         self.splitter.setStretchFactor(1, 2)
 
         # Bottom: command and buttons
@@ -116,22 +163,36 @@ class Window(QMainWindow):
         for b in (self.apply_btn, copy_out, copy_cmd):
             brow.addWidget(b)
 
+        # Log: what happened and anything worth knowing about the last run. The status bar is kept
+        # for the versions and for errors.
+        self.log_view = QPlainTextEdit(readOnly=True, maximumBlockCount=500)
+        self.log_view.setPlaceholderText("Messages appear here")
+        lines = self.log_view.fontMetrics().lineSpacing()
+        self.log_view.setFixedHeight(lines * 5 + 12)
+
         central = QWidget()
         v = QVBoxLayout(central)
         v.addLayout(top)
         v.addWidget(self.splitter, 1)
         v.addWidget(self.command)
         v.addLayout(brow)
-        self.setCentralWidget(central)
+        v.addWidget(self.log_view)
+        outer = QWidget()
+        ov = QVBoxLayout(outer)
+        ov.setContentsMargins(0, 0, 0, 0)
+        ov.setSpacing(0)
+        ov.addWidget(banner())
+        ov.addWidget(central, 1)
+        self.setCentralWidget(outer)
 
-        # Status bar: the mediainfo in use, always
+        # Status bar: the versions in use, always, and errors
         self.version_label = QLabel()
         self.statusBar().addPermanentWidget(self.version_label)
         if mi:
-            text = f"MediaInfo {mi.version()} · descriptions {data_tag()} · mediainfo-picker {__version__}"
+            text = f"MediaInfo {mi.version()} · Descriptions {data_tag()} · {APP_NAME} v{__version__}"
             self.version_label.setText(text)
         else:
-            self.version_label.setText("MediaInfo not found")
+            self.version_label.setText(f"MediaInfo not found · {APP_NAME} v{__version__}")
             self.statusBar().showMessage(error)
             self.apply_btn.setEnabled(False)
             browse.setEnabled(False)
@@ -144,6 +205,8 @@ class Window(QMainWindow):
             self.resize(1200, 760)
         if self.settings.splitter:
             self.splitter.restoreState(QByteArray.fromHex(self.settings.splitter.encode()))
+        else:
+            self.splitter.setSizes([480, max(self.width() - 480, 400)])
         self.update_palette_state()
 
     # --- the tree -------------------------------------------------------------------------------
@@ -182,6 +245,8 @@ class Window(QMainWindow):
         """Default: ticks shown, read-only. Full: greyed out. Selected fields: editable."""
         self.tree.setEnabled(self.mode is not Mode.FULL)
         editable = self.mode is Mode.SELECTED
+        self.defaults_btn.setEnabled(editable)
+        self.clear_btn.setEnabled(editable)
         self._updating = True
         for item in [*self.items(), *self.sections()]:
             flags = item.flags()
@@ -195,6 +260,10 @@ class Window(QMainWindow):
         return self.mode is Mode.FULL or default
 
     def build_tree(self) -> None:
+        # A new file keeps the sections you had open (before any search opened the rest).
+        expanded = self._expanded_before_search
+        if expanded is None:
+            expanded = self.expanded_sections()
         self._updating = True
         self.tree.clear()
         tops: dict[str, QTreeWidgetItem] = {}
@@ -211,8 +280,31 @@ class Window(QMainWindow):
             item.setToolTip(0, f"{f.param}\n{f.value}" + (f"\n\n{tip}" if tip else ""))
             item.setFlags(item.flags() | CHECKABLE)
             item.setCheckState(0, _check(self.ticked(f.param, f.default)))
+        for top in self.sections():
+            top.setExpanded(top.text(0) in expanded)
         self._updating = False
+        self._expanded_before_search = None
         self.apply_filter(self.search.text())
+
+    def expanded_sections(self) -> set[str]:
+        return {top.text(0) for top in self.sections() if top.isExpanded()}
+
+    def set_expanded(self, on: bool) -> None:
+        for top in self.sections():
+            if not top.isHidden():
+                top.setExpanded(on)
+
+    def set_selection(self, params: set[str]) -> None:
+        """Replace the ticks for this file's fields; saved fields this file lacks are kept."""
+        here = {f.param for f in self.fields}
+        self.selected = (self.selected - here) | (params & here)
+        self.refresh_ticks()
+
+    def select_defaults(self) -> None:
+        self.set_selection({f.param for f in self.fields if f.default})
+
+    def clear_selection(self) -> None:
+        self.set_selection(set())
 
     def refresh_ticks(self) -> None:
         self._updating = True
@@ -242,6 +334,12 @@ class Window(QMainWindow):
 
     def apply_filter(self, text: str) -> None:
         needle = text.strip().lower()
+        # Searching opens every section with a hit; clearing the search puts back what was open.
+        restore = None
+        if needle and self._expanded_before_search is None:
+            self._expanded_before_search = self.expanded_sections()
+        elif not needle and self._expanded_before_search is not None:
+            restore, self._expanded_before_search = self._expanded_before_search, None
         for top in self.sections():
             visible = 0
             for j in range(top.childCount()):
@@ -252,7 +350,10 @@ class Window(QMainWindow):
                 child.setHidden(not hit)
                 visible += hit
             top.setHidden(visible == 0)
-            top.setExpanded(bool(needle) and visible > 0)
+            if needle:
+                top.setExpanded(visible > 0)
+            elif restore is not None:
+                top.setExpanded(top.text(0) in restore)
         self.update_count()
 
     def update_count(self) -> None:
@@ -286,6 +387,7 @@ class Window(QMainWindow):
             QGuiApplication.restoreOverrideCursor()
         self.path = path
         self.file_edit.setText(path)
+        self.log(f"Opened {path}")
         self.settings.last_dir = str(Path(path).parent)
         if self.mode is Mode.SELECTED and not self.settings.selected_initialised:
             self.selected = {f.param for f in self.fields if f.default}
@@ -298,7 +400,7 @@ class Window(QMainWindow):
         if self.mi is None:
             return
         if not self.path:
-            self.statusBar().showMessage("Choose a file first.", 4000)
+            self.log("Choose a file first.")
             return
         p = plan(self.mode, self.fields, self.selected, self.known)
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -306,24 +408,28 @@ class Window(QMainWindow):
             result = self.mi.render(self.path, p)
         except MediaInfoError as exc:
             self.output.setPlainText(f"mediainfo failed:\n\n{exc}")
+            self.statusBar().showMessage(f"mediainfo failed: {exc}")
             return
         finally:
             QGuiApplication.restoreOverrideCursor()
+        self.statusBar().clearMessage()
         self.output.setPlainText(result.text)
         self.command.setText(result.command)
         self.command.setCursorPosition(0)
-        notes = []
+        self.log(f"Applied {self.radios[self.mode].text()}: {self.count.text()}.")
         if result.removed_labels:
-            notes.append("removed from the text (mediainfo cannot hide them): " + ", ".join(result.removed_labels))
+            self.log("Removed from the text (mediainfo cannot hide them): " + ", ".join(result.removed_labels))
         if p.unshowable:
-            notes.append("cannot be shown outside Full: " + ", ".join(p.unshowable))
-        self.statusBar().showMessage(" · ".join(notes), 0 if notes else 1)
+            self.log("Cannot be shown outside Full: " + ", ".join(p.unshowable))
+
+    def log(self, message: str) -> None:
+        self.log_view.appendPlainText(f"{datetime.now():%H:%M:%S}  {message}")
 
     def copy(self, text: str, what: str) -> None:
         clipboard = QGuiApplication.clipboard()
         if text and clipboard is not None:
             clipboard.setText(text)
-            self.statusBar().showMessage(f"{what} copied to the clipboard.", 3000)
+            self.log(f"{what} copied to the clipboard.")
 
     def closeEvent(self, event: QCloseEvent) -> None:
         s = self.settings
@@ -340,7 +446,8 @@ class Window(QMainWindow):
 
 def main() -> int:
     app = QApplication(sys.argv)
-    app.setApplicationName("mediainfo-picker")
+    app.setApplicationName("mediainfo-picker")  # also names the settings folder: keep it
+    app.setWindowIcon(app_icon())
     try:
         mi, err = MediaInfo(), ""
     except MediaInfoError as exc:

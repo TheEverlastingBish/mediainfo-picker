@@ -84,7 +84,8 @@ def test_selected_fields_starts_from_defaults_and_applies_ticks(window: Window) 
     text = window.output.toPlainText()
     assert "Sample Title" not in text and "Attachments" not in text
     assert "--HideParameter=General_Title" in window.command.text()
-    assert "Attachments" in window.statusBar().currentMessage()
+    assert "Attachments" in window.log_view.toPlainText()
+    assert not window.statusBar().currentMessage()  # the status bar is for versions and errors
 
 
 def test_search_filters_the_list(window: Window) -> None:
@@ -107,3 +108,64 @@ def test_selection_is_saved_and_restored(qapp: QApplication, settings_file: Path
     assert "General_Title" not in again.selected
     assert "Sample Title" not in again.output.toPlainText()
     close(again)
+
+
+def test_clear_all_and_defaults_only_in_selected_fields(window: Window) -> None:
+    assert not window.clear_btn.isEnabled() and not window.defaults_btn.isEnabled()
+    window.radios[Mode.SELECTED].setChecked(True)
+    assert window.clear_btn.isEnabled() and window.defaults_btn.isEnabled()
+    defaults = window.count.text()
+
+    window.selected.add("Other_Kind_Field")  # a saved field this file lacks
+    window.clear_selection()
+    assert window.count.text().startswith("0 of ")
+    assert all(i.checkState(0) == Qt.CheckState.Unchecked for i in window.items())
+    assert "Other_Kind_Field" in window.selected
+
+    window.select_defaults()
+    assert window.count.text() == defaults
+    assert "Other_Kind_Field" in window.selected
+
+
+def test_expand_collapse_and_search_restores_what_was_open(window: Window) -> None:
+    assert not window.expanded_sections()
+    window.set_expanded(True)
+    assert window.expanded_sections() == {t.text(0) for t in window.sections()}
+    window.set_expanded(False)
+    assert not window.expanded_sections()
+
+    general = next(window.sections())
+    general.setExpanded(True)
+    window.search.setText("unique id")
+    assert window.expanded_sections()
+    window.search.setText("")
+    assert window.expanded_sections() == {general.text(0)}
+
+
+def test_reopening_keeps_open_sections(window: Window) -> None:
+    general = next(window.sections())
+    general.setExpanded(True)
+    name = general.text(0)  # the item itself is deleted when the tree is rebuilt
+    window.open_file(SAMPLE)
+    assert window.expanded_sections() == {name}
+
+
+def test_left_panel_cannot_squeeze_the_count(window: Window) -> None:
+    assert not window.splitter.childrenCollapsible()
+    window.splitter.setSizes([0, 2000])
+    left = window.splitter.widget(0)
+    assert left is not None and left.width() >= left.minimumSizeHint().width()
+
+
+def test_banner_icon_and_versions(window: Window) -> None:
+    assert window.windowTitle() == "MediaInfo Picker"
+    assert not window.windowIcon().isNull()
+    versions = window.version_label.text()
+    assert versions.startswith("MediaInfo v") and "· Descriptions v" in versions
+    assert "· MediaInfo Picker v" in versions
+
+
+def test_messages_go_to_the_log(window: Window) -> None:
+    assert "Opened " in window.log_view.toPlainText()
+    window.copy("x", "Output")
+    assert window.log_view.toPlainText().splitlines()[-1].endswith("Output copied to the clipboard.")
