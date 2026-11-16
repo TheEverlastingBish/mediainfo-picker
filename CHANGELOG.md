@@ -4,6 +4,14 @@ What changed in each release of mediainfo-picker. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) (while it is 0.x, a new feature bumps the middle number).
 
+## [0.2.1] - 2026-11-16
+
+### Changed
+
+- The README is written for people using the app: a screenshot, what each prerequisite is for,
+  installing with uv (recommended) or pipx, updating and removing, and where settings are kept on
+  each system. This is the page PyPI shows.
+
 ## [0.2.0] - 2026-11-16
 
 First release on PyPI: `uv tool install mediainfo-picker` or `pipx install mediainfo-picker`.
@@ -39,5 +47,6 @@ First version.
   prints the same text.
 - The selection, mode and window layout are remembered between runs.
 
+[0.2.1]: https://github.com/TheEverlastingBish/mediainfo-picker/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/TheEverlastingBish/mediainfo-picker/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/TheEverlastingBish/mediainfo-picker/tree/v0.1.0
