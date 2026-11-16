@@ -75,19 +75,35 @@ class Window(QMainWindow):
         modes.addStretch(1)
         self.search = QLineEdit(placeholderText="Search fields…", clearButtonEnabled=True)
         self.search.textChanged.connect(self.apply_filter)
-        self.count = QLabel()
-        srow = QHBoxLayout()
-        srow.addWidget(self.search, 1)
-        srow.addWidget(self.count)
+        self._expanded_before_search: set[str] | None = None
         self.tree = QTreeWidget()
         self.tree.setHeaderHidden(True)
         self.tree.itemChanged.connect(self.item_changed)
+        expand = QPushButton("Expand all")
+        expand.clicked.connect(lambda: self.set_expanded(True))
+        collapse = QPushButton("Collapse all")
+        collapse.clicked.connect(lambda: self.set_expanded(False))
+        self.defaults_btn = QPushButton("Defaults")
+        self.defaults_btn.setToolTip("Tick exactly the fields mediainfo shows by default")
+        self.defaults_btn.clicked.connect(self.select_defaults)
+        self.clear_btn = QPushButton("Clear all")
+        self.clear_btn.setToolTip("Untick every field")
+        self.clear_btn.clicked.connect(self.clear_selection)
+        tools = QHBoxLayout()
+        for b in (expand, collapse):
+            tools.addWidget(b)
+        tools.addStretch(1)
+        for b in (self.defaults_btn, self.clear_btn):
+            tools.addWidget(b)
+        self.count = QLabel()
         left = QWidget()
         lv = QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
         lv.addLayout(modes)
-        lv.addLayout(srow)
+        lv.addWidget(self.search)
+        lv.addLayout(tools)
         lv.addWidget(self.tree, 1)
+        lv.addWidget(self.count)
 
         # Right: output
         self.output = QPlainTextEdit(readOnly=True, lineWrapMode=QPlainTextEdit.LineWrapMode.NoWrap)
@@ -95,6 +111,7 @@ class Window(QMainWindow):
         self.splitter = QSplitter()
         self.splitter.addWidget(left)
         self.splitter.addWidget(self.output)
+        self.splitter.setChildrenCollapsible(False)  # the left panel never shrinks below its buttons
         self.splitter.setStretchFactor(1, 2)
 
         # Bottom: command and buttons
@@ -144,6 +161,8 @@ class Window(QMainWindow):
             self.resize(1200, 760)
         if self.settings.splitter:
             self.splitter.restoreState(QByteArray.fromHex(self.settings.splitter.encode()))
+        else:
+            self.splitter.setSizes([480, max(self.width() - 480, 400)])
         self.update_palette_state()
 
     # --- the tree -------------------------------------------------------------------------------
@@ -182,6 +201,8 @@ class Window(QMainWindow):
         """Default: ticks shown, read-only. Full: greyed out. Selected fields: editable."""
         self.tree.setEnabled(self.mode is not Mode.FULL)
         editable = self.mode is Mode.SELECTED
+        self.defaults_btn.setEnabled(editable)
+        self.clear_btn.setEnabled(editable)
         self._updating = True
         for item in [*self.items(), *self.sections()]:
             flags = item.flags()
@@ -195,6 +216,10 @@ class Window(QMainWindow):
         return self.mode is Mode.FULL or default
 
     def build_tree(self) -> None:
+        # A new file keeps the sections you had open (before any search opened the rest).
+        expanded = self._expanded_before_search
+        if expanded is None:
+            expanded = self.expanded_sections()
         self._updating = True
         self.tree.clear()
         tops: dict[str, QTreeWidgetItem] = {}
@@ -211,8 +236,31 @@ class Window(QMainWindow):
             item.setToolTip(0, f"{f.param}\n{f.value}" + (f"\n\n{tip}" if tip else ""))
             item.setFlags(item.flags() | CHECKABLE)
             item.setCheckState(0, _check(self.ticked(f.param, f.default)))
+        for top in self.sections():
+            top.setExpanded(top.text(0) in expanded)
         self._updating = False
+        self._expanded_before_search = None
         self.apply_filter(self.search.text())
+
+    def expanded_sections(self) -> set[str]:
+        return {top.text(0) for top in self.sections() if top.isExpanded()}
+
+    def set_expanded(self, on: bool) -> None:
+        for top in self.sections():
+            if not top.isHidden():
+                top.setExpanded(on)
+
+    def set_selection(self, params: set[str]) -> None:
+        """Replace the ticks for this file's fields; saved fields this file lacks are kept."""
+        here = {f.param for f in self.fields}
+        self.selected = (self.selected - here) | (params & here)
+        self.refresh_ticks()
+
+    def select_defaults(self) -> None:
+        self.set_selection({f.param for f in self.fields if f.default})
+
+    def clear_selection(self) -> None:
+        self.set_selection(set())
 
     def refresh_ticks(self) -> None:
         self._updating = True
@@ -242,6 +290,12 @@ class Window(QMainWindow):
 
     def apply_filter(self, text: str) -> None:
         needle = text.strip().lower()
+        # Searching opens every section with a hit; clearing the search puts back what was open.
+        restore = None
+        if needle and self._expanded_before_search is None:
+            self._expanded_before_search = self.expanded_sections()
+        elif not needle and self._expanded_before_search is not None:
+            restore, self._expanded_before_search = self._expanded_before_search, None
         for top in self.sections():
             visible = 0
             for j in range(top.childCount()):
@@ -252,7 +306,10 @@ class Window(QMainWindow):
                 child.setHidden(not hit)
                 visible += hit
             top.setHidden(visible == 0)
-            top.setExpanded(bool(needle) and visible > 0)
+            if needle:
+                top.setExpanded(visible > 0)
+            elif restore is not None:
+                top.setExpanded(top.text(0) in restore)
         self.update_count()
 
     def update_count(self) -> None:

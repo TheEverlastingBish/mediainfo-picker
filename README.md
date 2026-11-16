@@ -1,5 +1,9 @@
 # MediaInfo Picker
 
+[![CI](https://github.com/TheEverlastingBish/mediainfo-picker/actions/workflows/ci.yml/badge.svg)](https://github.com/TheEverlastingBish/mediainfo-picker/actions/workflows/ci.yml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
+
 Pick which [MediaInfo](https://mediaarea.net/en/MediaInfo) fields to show for a media file, then
 copy the output, or the exact `mediainfo` command that produces it.
 
@@ -16,9 +20,12 @@ Not affiliated with MediaArea.
 
 - **Default / Full / Selected fields.** Default is what `mediainfo` shows on its own; Full is
   `--Full`; Selected fields is your own choice, and the only mode in which the field list can be
-  changed.
+  changed. There, **Defaults** ticks what `mediainfo` shows on its own and **Clear all** unticks
+  everything, so you can build a short list from nothing.
 - **Every field the file has**, grouped by section (General, Video, Audio #1, …), with MediaInfo's
-  own description as a tooltip. Search filters the list as you type.
+  own description as a tooltip. Sections start collapsed; **Expand all** and **Collapse all** open
+  or close them together. Search filters the list as you type and opens every section with a
+  match; clearing it puts back the sections you had open.
 - **Apply** shows the output in a monospace box; **Copy output** and **Copy command** put either on
   the clipboard. Pasted into a terminal, the command prints exactly the same text.
 - **Your selection is remembered**, in `~/.config/mediainfo-picker/settings.json` on Linux. It is
