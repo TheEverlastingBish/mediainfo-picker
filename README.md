@@ -30,7 +30,9 @@ Not affiliated with MediaArea.
   the clipboard. Pasted into a terminal, the command prints exactly the same text.
 - **Your selection is remembered**, in `~/.config/mediainfo-picker/settings.json` on Linux. It is
   stored by field name, so it applies to any file.
-- The status bar shows the MediaInfo version in use.
+- **A log under the buttons** says what happened (opened, applied, copied) and anything worth knowing
+  about the last run. The status bar shows the versions in use (MediaInfo, its field descriptions
+  and MediaInfo Picker) and any error.
 
 ## Requirements
 
@@ -68,7 +70,7 @@ From a checkout: `uv run mediainfo-picker`.
 - **A few fields cannot be hidden by `mediainfo` at all.** `--HideParameter` only accepts names
   listed by `mediainfo --Info-Parameters`, and given any other it prints nothing but an error.
   `Attachments` (in General) is one: it appears in the output but not in that list. Such fields are
-  removed from the text after the run instead; the status bar says so, and **Copy command** adds an
+  removed from the text after the run instead; the log says so, and **Copy command** adds an
   `awk` filter that removes them the same way.
 - **The copied command is for a Unix-style shell** (bash, zsh; on Windows, Git Bash or WSL). Its
   quoting and `awk` filter don't work in PowerShell or `cmd`.
