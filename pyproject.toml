@@ -1,22 +1,35 @@
 [project]
 name = "mediainfo-picker"
-version = "0.1.0"
+version = "0.2.0"
 description = "Pick which MediaInfo fields to show for a media file, and copy the output or the command that makes it"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE", "src/mediainfo_picker/data/mediainfo-csv/LICENSE-MediaInfoLib"]
 authors = [{ name = "Bish Sinha" }]
 requires-python = ">=3.12"
+keywords = ["mediainfo", "media", "video", "audio", "metadata", "qt"]
 classifiers = [
+    "Development Status :: 3 - Alpha",
     "Environment :: X11 Applications :: Qt",
-    "Topic :: Multimedia :: Video",
+    "Environment :: MacOS X",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Video",
 ]
 # Last key of [project]: anything after the [project.*] tables below would belong to them.
 dependencies = ["PySide6-Essentials>=6.5"]
 
 [project.urls]
 Repository = "https://github.com/TheEverlastingBish/mediainfo-picker"
+Issues = "https://github.com/TheEverlastingBish/mediainfo-picker/issues"
+Changelog = "https://github.com/TheEverlastingBish/mediainfo-picker/blob/main/CHANGELOG.md"
 
 [project.scripts]
 mediainfo-picker = "mediainfo_picker.app:main"

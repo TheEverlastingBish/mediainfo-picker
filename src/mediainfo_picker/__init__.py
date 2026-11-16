@@ -1,3 +1,5 @@
 """Pick which MediaInfo fields to show for a media file."""
 
-__version__ = "0.1.0"
+from importlib.metadata import version
+
+__version__ = version("mediainfo-picker")  # set in pyproject.toml, the one place it is typed
